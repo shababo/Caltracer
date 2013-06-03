@@ -21,14 +21,14 @@ if (~isfield(handles.info, 'title'))
 end
 
 if (~isfield(handles.info, 'versionNum'))
-    info.versionNum = 2.5;
+    info.versionNum = 3.0;
 end
 
 if (~isfield(handles.info, 'logo'))    
     info.logo = imread('hippo.bmp');
 end
 
-if (1 | ~isfield(handles.info, 'ctPath'))
+if (~isfield(handles.info, 'ctPath'))
     [pathstr, name, ext] = fileparts(which('caltracer2'));
     info.ctPath = pathstr;
 end
@@ -58,6 +58,7 @@ end
 %% Image Open Defaults
 %"Image" is the name of the original image (no mask)
 if (~isfield(handles, 'app'))
+    
     data.maskLabels = {'Image'};
     
     % Type of image input
@@ -81,9 +82,9 @@ if (~isfield(handles, 'app'))
     data.activeCells = [];
     
     % For downward signals such as Fura2
-   data.centroidDisplay.on = 0;
-   data.centroidDisplay.points = [];
-   data.centroidDisplay.text = [];   
+    data.centroidDisplay.on = 0;
+    data.centroidDisplay.points = [];
+    data.centroidDisplay.text = [];   
    
    
    

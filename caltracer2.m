@@ -43,7 +43,7 @@ if (~isfield(handles.app, 'preferences'))
        % Signal GUI checkbox initialization
     handles.app.preferences.showCheckBoxTag = 'showcheckbox';
     handles.app.preferences.showHaloCheckBoxTag = 'showhalocheckbox';
-    end
+end
 
 
 
