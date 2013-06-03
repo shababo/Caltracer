@@ -1,0 +1,80 @@
+workspace=who;
+
+bin_size = 10; %ms *10 
+start_corr = floor(40000/bin_size);
+end_corr = floor(65000/bin_size);
+shift = 20000/bin_size;
+
+for i=1:length(workspace)
+    channels = length(eval(workspace{i}));       
+    for j = 1:channels
+        Data = eval(workspace{i});
+        EventTimes = Data{j}(:,2);
+        EventTimes(1) = [];
+        EventsUP1 = find(EventTimes > 4000);
+        EventsUP2 = find(EventTimes <6500);
+        EventUPs_index = intersect(EventsUP1, EventsUP2);
+        EventTimesUP = EventTimes(EventUPs_index)*10;
+        EventVector = zeros(100000,1);
+        EventVector(EventTimesUP) = 1;
+        Events(i,j) = {EventVector};
+    end
+end
+
+cols = floor(length(EventVector)/bin_size); %number of columns that will
+% be created for trace matrix
+rem1 = rem(length(EventVector),bin_size);
+index = length(EventVector) - rem1 + 1;
+    
+
+for ii = 1:size(Events,1)
+    for jj = 1:size(Events,2)
+        Events{ii,jj}(index:end) = []; %delete points at end of trace which are the remainder of trace/bin_size
+        EventsBinPrelim = reshape(Events{ii,jj}, bin_size, cols);
+        EventsBinCell = zeros(cols,1);
+        for b = 1:size(EventsBinCell,1)
+            ei = find(EventsBinPrelim(:,b));
+            if ~isempty(ei)
+                EventsBinCell(b) = length(ei);
+            else EventsBinCell(b) = 0;
+            end
+        end
+        EventsBin{ii,jj} = EventsBinCell;
+    end 
+end
+
+t= 1;
+
+for iii = 1:size(EventsBin,1)
+    for jjj = 1:size(EventsBin,2)
+        sweep(:,jjj) = EventsBin{iii,jjj};
+    end
+    for p = 1:size(sweep,2) - 1
+        for q = p:size(sweep,2) -1
+            sc = circshift(sweep(:,p), [-shift 0]);
+            rsc_temp = zeros(2*shift,1);
+            for ss = 1:2*shift
+                sc = circshift(sc, [1 0]); %shift trace forward by 1 time bin
+                tempcorr_sc = corrcoef(sweep(start_corr:end_corr, q+1), sc(start_corr:end_corr)); %correlate
+                if ~isnan(tempcorr_sc(1,2))
+                    rsc_temp(ss) = tempcorr_sc(1,2);
+                else rsc_temp(ss) = 0;
+                end
+            end
+            rsc(:,t) = rsc_temp; %add correlations to matrix rsc; each column is a correlation between a cell pair
+            t = t+1;
+        end
+    end
+end
+
+     
+    
+    
+        
+ 
+    
+
+    
+    
+
+        

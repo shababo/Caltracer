@@ -1,0 +1,122 @@
+workspace = who;
+
+for i = 1:length(workspace)
+    channels=fieldnames(eval(workspace{i}));
+voltage=eval([workspace{i} '.' channels{1}]);
+current=eval([workspace{i} '.' channels{2}]);
+time = eval([workspace{i} '.' channels{3}]);
+
+%RMP and holding current
+[baseline,Vm(i)]=findbase(voltage);
+[baseline,HC(i)]=findbase(current);
+
+%Spike adaptation and frequency for 500ms, 2x threshold pulse
+v_train=voltage(346995:352005);
+t_train=time(346995:352005);
+SA(i)=index_accomodation2(v_train, t_train);
+F(i)=spike_frequency(v_train,t_train);
+
+%Rheobase calculated as 0.5* 2x injection
+i_train=current(347000:352000);
+rheobase(i)=.5*(mean(i_train)-HC(i));
+
+%Locate AP1 and AP2. 
+aps=findaps2(v_train);
+if length(aps) >=2
+t_AP1=t_train(aps(1)-40:aps(2)-30);
+else
+    t_AP1 = NaN;
+end
+
+if length(aps) >= 3
+t_AP2=t_train(aps(2)-40:aps(3)-30);
+else 
+    t_AP2 = NaN;
+end
+
+if length(aps) >=2
+v_AP1=v_train(aps(1)-40:aps(2)-30);
+else
+    v_AP1 = NaN;
+end
+
+if length(aps) >= 3
+v_AP2=v_train(aps(2)-40:aps(3)-30);
+else
+    v_AP2 = NaN;
+end
+
+%AP1 measurements hw=half-width, rt=rise time, ft=fall time, rr= rise rate
+%fr=fall rate
+if ~isnan(t_AP1)
+Amp1(i)=APamp(v_AP1);
+duration1(i)=APduration2(v_AP1,t_AP1);
+hw1(i)=half_width2(v_AP1,t_AP1);
+rt1(i)=RiseTime2(v_AP1,t_AP1);
+ft1(i)=FallTime2(v_AP1,t_AP1);
+rr1(i)=Amp1(i)/rt1(i);
+fr1(i)=Amp1(i)/ft1(i);
+end
+
+%AP2 measurements
+if ~isnan(v_AP2)
+Amp2(i)=APamp(v_AP2);
+duration2(i)=APduration2(v_AP2,t_AP2);
+hw2(i)=half_width2(v_AP2,t_AP2);
+rt2(i)=RiseTime2(v_AP2,t_AP2);
+ft2(i)=FallTime2(v_AP2,t_AP2);
+rr2(i)=Amp2(i)/rt2(i);
+fr2(i)=Amp2(i)/ft2(i);
+end
+
+%AP drop
+if ~isnan(v_AP2)
+drop(i)=Amp1(i)-Amp2(i);
+else 
+    drop(i) = NaN;
+end
+
+%Rin from smallest hyperpolarizing step
+v1=mean(voltage(81000:89000));
+i1=mean(current(81000:89000));
+v2=min(voltage(91000:99000));
+i2=mean(current(91000:99000));
+Rin(i)=(v2-v1)/(i2-i1);
+
+end
+
+A=[rheobase,Vm,Amp1,duration1,hw1,rt1,ft1,rr1,fr1,Amp2,duration2,hw2,rt2,ft2,rr2,fr2,drop,SA,Rin,F,HC];
+
+delete = [3 10 13 15 18 19 20];
+
+Rin(delete) = NaN;
+
+
+for r = 1:length(rheobase);
+    if rheobase(r) > 800
+        rheobase(r) = NaN;
+    end
+    if rheobase(r) < 5;
+        rheobase(r) = NaN;
+    end
+end
+
+% for in = 1:length(Rin)
+%     if Rin(in) > 3
+%         Rin(in) = NaN;
+%     end
+% end
+
+
+AVG_rheobase = getmeans(rheobase);
+AVG_Vm = getmeans(Vm);
+AVG_Rin = getmeans(Rin);
+AVG_hw = getmeans(hw1);
+avg_F = getmeans(F);
+
+SE_rheobase = get_SE(rheobase);
+SE_Vm = get_SE(Vm);
+SE_hw = get_SE(hw1);
+SE_F = get_SE(F);
+
+

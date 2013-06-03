@@ -1,0 +1,21 @@
+/ct_ROPing.m/1.2/Tue Dec 29 18:05:40 2009//
+/ct_baseline_subtract.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_baseline_subtract_user_defined.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_derivative.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_detrend.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_discrete_wavelets.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_envelopes.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_halo_subtract.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_highpass_filter.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_lowpass_filter.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_moving_average.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_normalize_by_max.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_normalize_by_user_defined.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_normalize_by_user_defined_std.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_remove_laser_pulses.m/1.2/Wed Jul 13 13:59:53 2011//
+/ct_signal_binary_data.m/1.1/Fri Oct 16 18:17:45 2009//
+/ct_zscore.m/1.1/Fri Oct 16 18:17:45 2009//
+D/preprocessor_options////
+/ct_fast_oopsi.m/1.2/Fri Sep 23 21:12:16 2011//
+/ct_dfof.m/1.2/Wed Dec  7 16:10:33 2011//
+/ct_matlab_detrend.m/1.2/Wed Dec  7 17:58:01 2011//

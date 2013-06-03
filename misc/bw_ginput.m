@@ -1,0 +1,251 @@
+function [out1,out2,out3,out4,out5,out6] = bw_ginput(arg1)
+%GINPUT Graphical input from mouse.
+%   [X,Y] = GINPUT(N) gets N points from the current axes and returns 
+%   the X- and Y-coordinates in length N vectors X and Y.  The cursor
+%   can be positioned using a mouse (or by using the Arrow Keys on some 
+%   systems).  Data points are entered by pressing a mouse button
+%   or any key on the keyboard except carriage return, which terminates
+%   the input before N points are entered.
+%
+%   [X,Y] = GINPUT gathers an unlimited number of points until the
+%   return key is pressed.
+% 
+%   [X,Y,BUTTON] = GINPUT(N) returns a third result, BUTTON, that 
+%   contains a vector of integers specifying which mouse button was
+%   used (1,2,3 from left) or ASCII numbers if a key on the keyboard
+%   was used.
+%
+%   Examples:
+%       [x,y] = ginput;
+%
+%       [x,y] = ginput(5);
+%
+%       [x, y, button] = ginput(1);
+%
+%   See also GTEXT, UIRESTORE, UISUSPEND, WAITFORBUTTONPRESS.
+
+%   Copyright 1984-2006 The MathWorks, Inc.
+%   $Revision: 1.1 $  $Date: 2009-10-16 18:17:43 $
+
+warning off
+
+out1 = []; out2 = []; out3 = []; out4 = []; out5 = []; out6 = []; y = [];
+c = computer;
+if ~strcmp(c(1:2),'PC') 
+   tp = get(0,'TerminalProtocol');
+else
+   tp = 'micro';
+end
+
+if ~strcmp(tp,'none') && ~strcmp(tp,'x') && ~strcmp(tp,'micro'),
+   if nargout == 1,
+      if nargin == 1,
+         out1 = trmginput(arg1);
+      else
+         out1 = trmginput;
+      end
+   elseif nargout == 2 || nargout == 0,
+      if nargin == 1,
+         [out1,out2] = trmginput(arg1);
+      else
+         [out1,out2] = trmginput;
+      end
+      if  nargout == 0
+         out1 = [ out1 out2 ];
+      end
+   elseif nargout == 3,
+      if nargin == 1,
+         [out1,out2,out3] = trmginput(arg1);
+      else
+         [out1,out2,out3] = trmginput;
+      end
+   end
+else
+   
+   fig = gcf;
+   figure(fig);
+   %for later assignment of outputs
+   b = [];
+   gcas = [];
+   figptsx = [];
+   figptsy = [];
+
+   
+   if nargin == 0
+      how_many = -1;
+   else
+      how_many = arg1;
+      if  ischar(how_many) ...
+            || size(how_many,1) ~= 1 || size(how_many,2) ~= 1 ...
+            || ~(fix(how_many) == how_many) ...
+            || how_many < 0
+         error('MATLAB:ginput:NeedPositiveInt', 'Requires a positive integer.')
+      end
+      if how_many == 0%if ZERO inputs selected, 
+          %just give current cursor position in fig and get out
+         ptr_fig = 0;
+         while(ptr_fig ~= fig)
+            ptr_fig = get(0,'PointerWindow');
+         end
+         scrn_pt = get(0,'PointerLocation');%get point in screen space
+         loc = get(fig,'Position');
+         pt = [scrn_pt(1) - loc(1), scrn_pt(2) - loc(2)];%get point in fig space
+         %assign outputs
+         out1 = pt(1);
+         y = pt(2);
+      elseif how_many < 0 %if userinput was actually less than zero
+         error('MATLAB:ginput:InvalidArgument', 'Argument must be a positive integer.')
+      end
+   end
+   
+   % Suspend figure functions
+   state = uisuspend(fig);
+   
+   %turn figure toolbar off
+   toolbar = findobj(allchild(fig),'flat','Type','uitoolbar');
+   if ~isempty(toolbar)
+        ptButtons = [uigettool(toolbar,'Plottools.PlottoolsOff'), ...
+                     uigettool(toolbar,'Plottools.PlottoolsOn')];
+        ptState = get (ptButtons,'Enable');
+        set (ptButtons,'Enable','off');
+   end
+
+   set(fig,'pointer','fullcrosshair');
+   fig_units = get(fig,'units');
+   char = 0;
+
+   % We need to pump the event queue on unix
+   % before calling WAITFORBUTTONPRESS 
+   drawnow
+   
+   while how_many ~= 0%unless was zero, in which case we already got what we needed, go on
+      % Use no-side effect WAITFORBUTTONPRESS
+      waserr = 0;
+      try
+          keydown = wfbp;%get actual input from user - either key or mouse
+      catch
+          waserr = 1;
+      end
+      if(waserr == 1)
+         if(ishandle(fig))
+            set(fig,'units',fig_units);
+            uirestore(state);
+            error('MATLAB:ginput:Interrupted', 'Interrupted');
+         else
+            error('MATLAB:ginput:FigureDeletionPause', 'Interrupted by figure deletion');
+         end
+      end
+      
+      ptr_fig = get(0,'CurrentFigure');
+      if(ptr_fig == fig)
+         if keydown
+            char = get(fig, 'CurrentCharacter');
+            button = abs(get(fig, 'CurrentCharacter'));
+            scrn_pt = get(0, 'PointerLocation');
+            set(fig,'units','pixels')
+            loc = get(fig, 'Position');
+            pt = [scrn_pt(1) - loc(1), scrn_pt(2) - loc(2)];
+            set(fig,'CurrentPoint',pt);
+         else
+            button = get(fig, 'SelectionType');
+            if strcmp(button,'open') 
+               button = 1;
+            elseif strcmp(button,'normal') 
+               button = 1;
+            elseif strcmp(button,'extend')
+               button = 2;
+            elseif strcmp(button,'alt') 
+               button = 3;
+            else
+               error('MATLAB:ginput:InvalidSelection', 'Invalid mouse selection.')
+            end
+         end
+         pt = get(gca, 'CurrentPoint');
+         
+         set(gcf,'units','normalized');
+         figpt = get(gcf,'CurrentPoint');
+         set(gcf,'units','Pixels');
+         
+         how_many = how_many - 1;
+         
+         if(char == 13) % & how_many ~= 0)
+            % if the return key was pressed, char will == 13,
+            % and that's our signal to break out of here whether
+            % or not we have collected all the requested data
+            % points.  
+            % If this was an early breakout, don't include
+            % the <Return> key info in the return arrays.
+            % We will no longer count it if it's the last input.
+            break;
+         end
+         
+         out1 = [out1;pt(1,1)];
+         y = [y;pt(1,2)];
+         b = [b;button];
+         gcas = [gcas;gca];
+         figptsx = [figptsx;figpt(1,1)];
+         figptsy = [figptsy;figpt(1,2)];
+         
+      end
+   end
+   
+   uirestore(state);
+   if ~isempty(toolbar) && ~isempty(ptButtons)
+        set (ptButtons(1),'Enable',ptState{1});
+        set (ptButtons(2),'Enable',ptState{2});
+   end
+   set(fig,'units',fig_units);
+   
+   if nargout > 1
+      out2 = y;
+      if nargout > 2
+         out3 = b;
+         if nargout >3
+             out4 = gcas;
+             if nargout > 5;
+                 out5 = figptsx;
+                 out6 = figptsy;
+             end
+         end
+      end
+   else
+      out1 = [out1 y];
+   end
+   
+end
+warning on
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function key = wfbp
+%WFBP   Replacement for WAITFORBUTTONPRESS that has no side effects.
+
+fig = gcf;
+current_char = [];
+warning off
+
+% Now wait for that buttonpress, and check for error conditions
+waserr = 0;
+try
+  h=findall(fig,'type','uimenu','accel','C');   % Disabling ^C for edit menu so the only ^C is for
+  set(h,'accel','');                            % interrupting the function.
+  keydown = waitforbuttonpress;
+  current_char = double(get(fig,'CurrentCharacter')); % Capturing the character.
+  if~isempty(current_char) && (keydown == 1)           % If the character was generated by the 
+	  if(current_char == 3)                       % current keypress AND is ^C, set 'waserr'to 1
+		  waserr = 1;                             % so that it errors out. 
+	  end
+  end
+  
+  set(h,'accel','C');                                 % Set back the accelerator for edit menu.
+catch
+  waserr = 1;
+end
+drawnow;
+if(waserr == 1)
+   set(h,'accel','C');                                % Set back the accelerator if it errored out.
+   error('MATLAB:ginput:Interrupted', 'Interrupted');
+end
+
+if nargout>0, key = keydown; end
+warning on
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

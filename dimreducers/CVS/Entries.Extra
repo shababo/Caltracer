@@ -1,0 +1,12 @@
+/ct__no_dim_reduc.m////*////
+/ct_lle.m////*////
+/ct_max.m////*////
+/ct_max_by_segment.m////*////
+/ct_mean.m////*////
+/ct_mean_by_segment.m////*////
+/ct_median.m////*////
+/ct_median_by_segment.m////*////
+/ct_min.m////*////
+/ct_min_by_segment.m////*////
+/ct_pca.m////*////
+/ct_stdev_by_segment.m////*////

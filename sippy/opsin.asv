@@ -1,0 +1,74 @@
+function [analysis] = opsin(V);
+
+% inputs
+% V is a structure in the workspace
+
+% V.epath      -- path to associated .paq file containing ephys data (path)
+
+
+% output:
+%  the amplitudes, ratios of amplitudes, decays, rise times will be
+%  calculated and added to a data structure
+
+sample_rate = 10000;
+ISI = 20; %interstimulus interval in Hz
+ITI = 4; % intertrial interval--> seconds in between stimulation trials change according to experimental conditions
+
+
+ITIs = ITI*sample_rate;
+
+ISIs = (1/ISI)*sample_rate;
+
+data = paq2lab(V.epath);
+sd = std(data(1:20000));
+diff_thresh = 10*sd;
+diff1 = diff(data,1,1);
+stim_art_index = find(abs(diff1 > diff_thresh));
+diff2 = roundn(diff(stim_art_index),1);
+number_trials = length(find(diff2 >= ITIs)) + 1;
+number_stims = (length(find(diff2 == ISIs)) + number_trials)/number_trials;
+diff2(end + 1) = diff2(end) + ITIs;
+
+ends = stim_art_index(find(diff2 >= ITIs));
+ends = ends + ISIs;
+ends(end+1) = stim_art_index(end);
+ends(end) = ends(end) + ISIs;
+starts = find(diff2 >= ISIs);
+
+s = 1;
+for i = 1:number_trials
+    indices{i} = zeros(number_stims,2);
+    indices{i}(1:number_stims,1) = stim_art_index(starts(s:s + number_stims -1)) + 10;
+    indices{i}(1:number_stims,2) = indices{i}(1:number_stims,1) + (ISIs -20);
+    event_index = indices{i};
+    for ii = 1:length(event_index)
+        [max_amp index_max] = max(data(event_index(ii,1):event_index(ii,2)));
+        index_max = event_index(ii,1) + index_max -1;
+        [min_amp index_min] = min(data(event_index(ii,1):index_max));
+        index_min = event_index(ii,1) + index_min - 1;
+        amp_event = data(index_min:index_max) - data(index_min);
+        amp_10 = find(amp_event > .1*max(amp_event),1, 'first');
+        amp_90 = find(amp_event > .9*max(amp_event),1, 'first');
+        amp_event = data(event_index(ii,1):event_index(ii,2)) - min(data(event_index(ii,1):event_index(ii,2)));
+        integral(ii)  = sum(amp_event); 
+        integral_all = sum(integral);
+        amps(ii) = max(data(event_index(ii,1):event_index(ii,2))) - min(data(event_index(ii,1):event_index(ii,2)));
+        ten_90(ii) = (amp_90 - amp_10)/sample_rate;
+    end
+    for iii = 1:length(event_index)-1;
+        amp_ratio(iii) = amps(iii+1)/amps(1);
+    end
+    all_amps{i} = amps;
+    amp_ratios{i} = amp_ratio;
+    ten_90_all{i} = ten_90;
+    integral{ii} = integral;
+    integral_all {ii} = integral_all;
+    s = s + number_stims;
+    amps = [];
+    amp_ratio = [];
+    ten_90 = [];
+end
+
+a = b;
+
+

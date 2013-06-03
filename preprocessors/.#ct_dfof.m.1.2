@@ -1,0 +1,37 @@
+function x = ct_dfof(x, options)
+[nrecordings len] = size(x);
+
+time_res = options.timeRes.value;
+
+%F0 = mean of the lowest 50% of n previous frames
+
+% We'd like to get
+
+% (Fi - F0)/F0
+%
+
+nFrames=ceil(options.nSecs.value/time_res);
+
+for i = 1:nrecordings
+    y=x(i,:);
+    for j=1:nFrames 
+        x(i,j)=(y(j) - medfilt1(x(i,1:30)) /mean(medfilt1(y,30);
+    end
+    for j=nFrames+1:len
+        fo=y(j-nFrames:j);
+        switch options.function.value
+            case {'median','MEDIAN'}
+                fomed=median(fo);
+                for k=1:nFrames
+                    kk=nFrames-k+1;
+                    if fo(kk)>fomed
+                        fo(kk)=[];
+                    end
+                end
+        end
+        fo=mean(fo);
+        x(i,j) = (y(j) - fo) / fo;
+    end
+end
+
+x(:,1)=0;

@@ -1,0 +1,32 @@
+workspace=who;
+
+
+for i=1:length(workspace)
+
+    channels=fieldnames(eval(workspace{i}));
+    channels(end) = [];
+
+    for j = 1:length(channels)
+        data = eval([workspace{i} '.' channels{j}]);
+        stim_art= find(abs(diff(data) > 20)); %find the stim artifacts
+        a = [find(diff(stim_art) > 50)]'; %find breaks between artifacts
+        a = [a, length(stim_art)]; %add back last artifact
+        for b = 1:length(a);
+            c(b,:) = (stim_art(a(b))-8: stim_art(a(b)) + 2); %use indices
+        end
+        data(c) = [];
+        FE = channels{j};
+        FileEnd = FE(end-2:end);
+        filename = [workspace{i}, FileEnd];
+        FileToWrite = strcat(filename,'.bin');
+        fid = fopen(FileToWrite, 'w+');
+        fwrite(fid,data','float32');
+        fclose(fid);
+    end
+end
+
+
+
+
+
+
