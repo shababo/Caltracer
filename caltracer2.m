@@ -134,7 +134,7 @@ hObject = handles.fig;
 
 
 %% Taskbar Menu
-handles.uimenuLabels = {'File', 'Preferences', 'Export', 'Contours', 'Preprocessing', 'Clustering', 'Functions'};
+handles.uimenuLabels = {'File', 'Preferences', 'Import', 'Export', 'Contours', 'Preprocessing', 'Clustering', 'Functions', 'Debug'};
 % Setup menu and menu group.
 menu_idx = get_menu_label_idx(handles, 'File');
 handles.menugroup{menu_idx}.file = uimenu('Label', 'File');
@@ -192,7 +192,23 @@ uimenu(handles.menugroup{menu_idx}.preferences, ...
        'Callback', 'caltracer2(''show_contour_ordering_callback'',gcbo,guidata(gcbo))',...
        'Enable', 'off');
 
-   
+% Import Menu.
+menu_idx = get_menu_label_idx(handles, 'Import');
+handles.menugroup{menu_idx}.import = ...
+    uimenu('Label', 'Import', ...
+	   'Enable', 'on');
+uimenu(handles.menugroup{menu_idx}.import, ...
+       'Label', 'Import Current Trace', ...
+       'Enable', 'On', ...
+       'Callback', 'caltracer2(''import_current_callback'',gcbo,guidata(gcbo))');
+uimenu(handles.menugroup{menu_idx}.import, ...
+       'Label', 'Import Voltage Trace', ...
+       'Enable', 'Off', ...
+       'Callback', 'caltracer2(''import_voltage_callback'',gcbo,guidata(gcbo))');
+uimenu(handles.menugroup{menu_idx}.import, ...
+       'Label', 'Import LFP', ...
+       'Enable', 'Off', ...
+       'Callback', 'caltracer2(''import_lfp_callback'',gcbo,guidata(gcbo))');   
    
 % Export Menu.
 menu_idx = get_menu_label_idx(handles, 'Export');
@@ -410,6 +426,16 @@ end
 % functions that don't disturb the handles and can be enabed earlier.
 % This simply measures the distanre on the axis. -DCS:2005/08/11
 handles = menuset(handles, 'functions','functions','measure_distance','Enable','on');
+
+% Debug Menu.
+menu_idx = get_menu_label_idx(handles, 'Debug');
+handles.menugroup{menu_idx}.debug = ...
+    uimenu('Label', 'Debug', ...
+	   'Enable', 'On');
+uimenu(handles.menugroup{menu_idx}.debug, ...
+       'Label', 'Save handles struct to workspace', ...
+       'Callback', 'caltracer2(''save_handles_callback'', gcbo, guidata(gcbo))',...
+       'Enable', 'on');
 
 
 % The GUI flow goes basicall in this order, too:
@@ -4162,6 +4188,33 @@ handles = show_ordering_line(handles, ax, 1);
 guidata(hObject, handles);
 
 
+
+
+%% Import Menu
+
+function import_current_callback(hObject, handles)
+
+% make sure user knows how to properly import a current
+confirm = questdlg('Confirm that you are about load a .mat file containg two vectors of equal length named "current" and "time"...','Confirmation','Confirm','Cancel','Confirm');
+
+switch confirm
+    case 'Confirm'
+        
+        [filename,pathname] = uigetfile('.mat');
+        loaded_data = load([pathname filename]);
+        if isfield(loaded_data,'current') && isnumeric(loaded_data.current) &&...
+                isnumeric(loaded_data.time) && length(loaded_data.current) == length(loaded_data.time)
+            current = loaded_data.current;
+            current_t = loaded_data.time;
+            current_dt = mean(diff(current_t));
+        else
+            errordlg('No acceptable data in that .mat file...');
+        end
+        
+    case 'Cancel'
+end
+
+
 %% Export Menu.
 
 function copy_axis_as_meta_to_clipboard_callback(hObject, handles)
@@ -4875,3 +4928,7 @@ handles = feval(fname, handles);
 % but I'm inclined to save only the experiment part of handles and
 % show any graphics changes, but not save them.  -DCS:2005/08/02
 guidata(hObject, handles);
+
+%% Debug Menu
+function save_handles_callback(hObject, handles)
+assignin('base','caltracer_handles',handles);
