@@ -17,7 +17,7 @@ if strcmpi(handles.app.data.currentImageInputType, 'inputarg') %if an image was
     param.frameType='variable';
 else %if no image yet... get one
     if strcmpi(handles.app.data.currentImageInputType, 'inputfilename');
-        [pathname,filename,ext]=fileparts(varargin{2})
+        [pathname,filename,ext] = fileparts(varargin{2});
         filename = [filename ext];
         if isempty(pathname);
             pathname = [cd '\'];
@@ -28,52 +28,63 @@ else %if no image yet... get one
         fnm = [pathname filename];
         handles.app.experiment.fileName = fnm;
     else
-        if handles.app.info.issplit ==1
+        if handles.app.info.issplit == 1
             filename = handles.app.experiment.Image(maskidx).fileName;
             pathname = handles.app.experiment.Image(maskidx).pathName;
             fnm = [pathname filename];
             handles.app.experiment.fileName = fnm;
             set(handles.fig, 'Name', [handles.app.info.title ' - ' filename]);
         else
-        [filename, pathname] = uigetfile({'*.tif'}, 'Choose image to open');
-        if ~ischar(filename)
-            handles = [];
-            return
-        end
-        set(handles.fig, 'Name', [handles.app.info.title ' - ' filename]);
-        fnm = [pathname filename];
-        handles.app.experiment.fileName = fnm;
+            
+            filetypes = {'*.tif';'*.cxd'};
+            % user selects the file
+            [filename, pathname, filetype_idx] = uigetfile(filetypes, 'Choose image to open');
+            
+            % what type of file
+            handles.app.experiment.Image(maskidx).type = filetypes{filetype_idx}(3:end);
+
+            % confirm filename is a string... is this necessary?
+            if ~ischar(filename)
+                handles = [];
+                return
+            end
+            
+            % adjust name of figure/title of this project
+            set(handles.fig, 'Name', [handles.app.info.title ' - ' filename]);
+            fnm = [pathname filename];
+            handles.app.experiment.fileName = fnm;
         end
     end	
     
 
         
-        % Load the various zstack routines from the directory.
-        [str, zstack_names] = readdir(handles, 'zstacks');
-        
-        %Allow user to specify favorite zstack function... or default=1;
-        try
-            match = handles.app.preferences.zstack;
-        catch
-            match=1;
-        end
-        
-        if handles.app.preferences.zstackonly ==1
-            s = handles.app.preferences.zstack;
-        else
-        [s,v] = listdlg('PromptString','Select a zstack option:',...
-                'SelectionMode','single',...
-                'ListString', str,...
-                'InitialValue',match);
-        if (~v)
-            handles = [];
-            return;
-        end
-        end
-        % Process the image stack.
-        zstack_name = zstack_names{s};
+    % Load the various zstack routines from the directory.
+    [str, zstack_names] = readdir(handles, 'zstacks');
+
+    %Allow user to specify favorite zstack function... or default=1;
+    try
+        match = handles.app.preferences.zstack;
+    catch
+        match=1;
+    end
+
+    if handles.app.preferences.zstackonly ==1
+        s = handles.app.preferences.zstack;
+    else
+    [s,v] = listdlg('PromptString','Select a zstack option:',...
+            'SelectionMode','single',...
+            'ListString', str,...
+            'InitialValue',match);
+    if (~v)
+        handles = [];
+        return;
+    end
+    end
+    % Process the image stack.
+    zstack_name = zstack_names{s};
     %end
 	[zstack, param] = feval(zstack_name, filename, pathname, handles.app.experiment.opensequential);
+    
 end
 
 handles.app.experiment.fileName = filename;

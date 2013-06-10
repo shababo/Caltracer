@@ -43,19 +43,36 @@ end
 
 if sequential==0
     % If single multipage tiff file is opened.
-    info = ct_tifinfo(fnm);
-    if (nframes+xth_frame > info.numframes)
-        nframes = info.numframes-xth_frame;
-    end
+%     info = ct_tifinfo(fnm);
+%     if (nframes+xth_frame > info.numframes)
+%         nframes = info.numframes-xth_frame;
+%     end
+% 
+%     zstack = zeros(info.height,info.width);
+%     h = waitbar(0, 'Creating average zstack.  Please wait.');
+%     for c = 1:nframes
+%         zstack = zstack + double(imread(fnm,c+xth_frame-1));
+%         waitbar(c/nframes);
+%     end
+%     close(h);
+%     zstack = zstack / nframes;
 
-    zstack = zeros(info.height,info.width);
-    h = waitbar(0, 'Creating average zstack.  Please wait.');
+    % let's use bio-formats!!
+    image_obj = bfGetReader([pathname filename]);
+    
+    if (nframes + xth_frame > image_obj.getImageCount)
+        nframes = image_obj.getImageCount - xth_frame;
+    end
+    
+    zstack = zeros(image_obj.getOptimalTileHeight,image_obj.getOptimalTileWidth);
+    
+    h = waitbar(0, 'Creating average zstack. Please wait.');
     for c = 1:nframes
-        zstack = zstack + double(imread(fnm,c+xth_frame-1));
+        zstack = zstack + double(bfGetPlane(image_obj,c))/nframes;
         waitbar(c/nframes);
     end
     close(h);
-    zstack = zstack / nframes;
+        
 
 else
     %If sequential stack is opened.

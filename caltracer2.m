@@ -1737,7 +1737,8 @@ end
 
 % Once the image is loaded, delete the logo from handles.
 if isfield(handles.app.info,'logoImage');
-    delete(handles.app.info.logoImage);
+    % delete(handles.app.info.logoImage); - BS I don't think this does
+    % anything...
     handles.app.info = rmfield(handles.app.info,'logoImage');
 end
 guidata(hObject, handles);
